@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Narco-Metro Alpha | Overlord Build</title>
+  <style>
+    body{font-family:monospace;background:#111;color:#0f0;margin:0;padding:20px;}
+    #console{border:1px solid #0f0;padding:10px;height:200px;overflow-y:auto;margin-bottom:10px;}
+    input{width:100%;background:#000;color:#0f0;border:1px solid #0f0;padding:5px;}
+    button{margin-top:5px;margin-right:5px;background:#000;color:#0f0;border:1px solid #0f0;cursor:pointer;}
+  </style>
+</head>
+<body>
+  <h1>Narco-Metro 2035 // Alpha Overlord Build</h1>
+  <div id="console">City booting...</div>
+  <input id="cmd" placeholder="type command: cash, dope, gun, quest, help">
+  <br>
+  <button onclick="godCash()">+1 k Credits</button>
+  <button onclick="godDope()">+10 Synth Dope</button>
+  <button onclick="godGun()">+1 Poly-Gun</button>
+  <button onclick="clearCon()">Clear Log</button>
+
+  <script>
+    const con = document.getElementById('console');
+    const inp = document.getElementById('cmd');
+    let cash = 100, dope = 0, gun = 0;
+
+    function log(msg){con.innerHTML += msg + '<br>'; con.scrollTop = con.scrollHeight;}
+    function clearCon(){con.innerHTML='';}
+    function godCash(){cash+=1000; log('God-mode: +1 k Credits');}
+    function godDope(){dope+=10; log('God-mode: +10 Synth Dope');}
+    function godGun(){gun+=1; log('God-mode: +1 Poly-Gun');}
+
+    function evalCmd(){
+      const c = inp.value.trim().toLowerCase();
+      if(c==='cash') log('Credits: '+cash);
+      else if(c==='dope') log('Synth Dope: '+dope);
+      else if(c==='gun') log('Poly-Guns: '+gun);
+      else if(c==='quest'){
+        cash+=50; dope+=2;
+        log('Side-quest complete: +50 Cr, +2 Dope');
+      }else if(c==='help'){
+        log('Commands: cash, dope, gun, quest, help');
+      }else log('Unknown command. Type help.');
+      inp.value='';
+    }
+    inp.addEventListener('keyup', e=>{if(e.key==='Enter')evalCmd();});
+    log('City online. Type help for commands.');
+  </script>
+</body>
+</html>
