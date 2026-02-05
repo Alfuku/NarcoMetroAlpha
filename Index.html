@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#000000">
+  <title>NightCity: Overlord 2087</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    :root{
+      --neon-green:#00ff41;--neon-blue:#00d4ff;--neon-pink:#ff00ff;--neon-purple:#bf00ff;
+      --neon-gold:#ffd700;--neon-red:#ff0040;--dark-bg:#020204;--panel-bg:#0a0a0f;
+      --premium:#ffd700;--vip:#ff00ff;--overlord:#ff0040;
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+    html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:var(--dark-bg);color:#fff;font-family:'Segoe UI',sans-serif;font-size:13px;}
+    
+    /* Login Screen */
+    #login-screen{position:fixed;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse at center,#0a0a1a 0%,#000 100%);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;}
+    #login-logo{font-size:2.5em;font-weight:900;color:var(--neon-green);text-shadow:0 0 30px var(--neon-green);margin-bottom:10px;text-align:center;}
+    #login-subtitle{color:var(--neon-blue);font-size:0.9em;margin-bottom:30px;text-align:center;}
+    .login-container{background:rgba(10,10,15,0.9);border:2px solid var(--neon-green);border-radius:20px;padding:30px;max-width:400px;width:100%;backdrop-filter:blur(10px);box-shadow:0 0 50px rgba(0,255,65,0.2);}
+    .login-tabs{display:flex;gap:10px;margin-bottom:20px;}
+    .login-tab{flex:1;padding:12px;background:rgba(255,255,255,0.05);border:1px solid #333;border-radius:8px;color:#888;cursor:pointer;text-align:center;font-size:0.85em;transition:all 0.2s;}
+    .login-tab.active{background:var(--neon-green);color:#000;border-color:var(--neon-green);font-weight:bold;}
+    .login-form{display:none;}.login-form.active{display:block;}
+    .input-group{margin-bottom:15px;}
+    .input-group label{display:block;font-size:0.75em;color:#888;margin-bottom:5px;text-transform:uppercase;}
+    .input-group input{width:100%;padding:12px;background:#000;border:1px solid #333;border-radius:8px;color:#fff;font-size:1em;transition:all 0.2s;}
+    .input-group input:focus{border-color:var(--neon-green);outline:none;box-shadow:0 0 10px rgba(0,255,65,0.3);}
+    .btn-login{width:100%;padding:15px;background:var(--neon-green);color:#000;border:none;border-radius:8px;font-weight:bold;font-size:1em;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:all 0.2s;margin-top:10px;}
+    .btn-login:hover{box-shadow:0 0 30px var(--neon-green);}
+    .social-login{display:flex;gap:10px;margin-top:20px;}
+    .social-btn{flex:1;padding:12px;border:1px solid #333;background:rgba(255,255,255,0.05);border-radius:8px;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-size:0.85em;transition:all 0.2s;}
+    .social-btn.google:hover{background:#db4437;border-color:#db4437;}
+    .social-btn.facebook:hover{background:#4267B2;border-color:#4267B2;}
+    .divider{display:flex;align-items:center;margin:20px 0;color:#666;font-size:0.8em;}
+    .divider::before,.divider::after{content:"";flex:1;height:1px;background:#333;margin:0 10px;}
+    #g_id_signin{width:100%;margin-top:10px;}
+    .location-display{position:absolute;top:20px;right:20px;background:rgba(0,0,0,0.8);border:1px solid var(--neon-blue);padding:10px 15px;border-radius:8px;font-size:0.8em;color:var(--neon-blue);}
+    .location-flag{font-size:1.2em;margin-right:5px;}
+    
+    /* Main App */
+    #app{display:none;width:100%;height:100%;flex-direction:column;}
+    
+    /* Overlord Mode Indicator */
+    .overlord-banner{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,var(--overlord),#ff8800);color:#000;padding:8px 30px;border-radius:20px;font-weight:bold;font-size:0.9em;z-index:9999;box-shadow:0 0 30px var(--overlord);animation:pulse 2s infinite;display:none;}
+    .overlord-banner.active{display:block;}
+    
+    /* Top HUD */
+    #top-hud{height:55px;background:linear-gradient(180deg,#0f0f1a 0%,#050510 100%);border-bottom:2px solid var(--neon-green);display:flex;align-items:center;justify-content:space-between;padding:0 15px;}
+    #user-profile{display:flex;align-items:center;gap:10px;}
+    #user-avatar{width:35px;height:35px;border-radius:50%;background:var(--neon-green);display:flex;align-items:center;justify-content:center;font-size:1.2em;border:2px solid #fff;}
+    #user-info{display:flex;flex-direction:column;}
+    #user-name{font-weight:bold;font-size:0.9em;}
+    #user-status{font-size:0.7em;color:var(--neon-green);}
+    #premium-badge{display:none;background:linear-gradient(90deg,var(--premium),var(--neon-orange));color:#000;padding:3px 10px;border-radius:10px;font-size:0.7em;font-weight:bold;margin-left:10px;}
+    #premium-badge.active{display:block;}
+    #overlord-badge{display:none;background:var(--overlord);color:#fff;padding:3px 10px;border-radius:10px;font-size:0.7em;font-weight:bold;margin-left:5px;border:1px solid #fff;}
+    #overlord-badge.active{display:block;}
+    #hud-currency{display:flex;gap:15px;}
+    .currency{display:flex;align-items:center;gap:5px;background:rgba(0,0,0,0.5);padding:6px 12px;border-radius:6px;border:1px solid #333;}
+    .currency.premium{border-color:var(--premium);color:var(--premium);}
+    .currency.overlord{border-color:var(--overlord);color:var(--overlord);box-shadow:0 0 10px var(--overlord);}
+    .currency-amount{font-weight:bold;font-family:monospace;}
+
+    /* Overlord Panel */
+    #overlord-panel{position:fixed;right:-300px;top:55px;bottom:0;width:280px;background:linear-gradient(180deg,#1a0000 0%,#0a0000 100%);border-left:3px solid var(--overlord);z-index:200;transition:right 0.3s;padding:15px;overflow-y:auto;}
+    #overlord-panel.active{right:0;}
+    #overlord-toggle{position:fixed;right:20px;bottom:100px;width:60px;height:60px;background:var(--overlord);color:#fff;border-radius:50%;border:3px solid #fff;font-size:1.5em;cursor:pointer;z-index:201;display:none;box-shadow:0 0 30px var(--overlord);animation:glow 2s infinite;}
+    #overlord-toggle.active{display:flex;align-items:center;justify-content:center;}
+    @keyframes glow{0%,100%{box-shadow:0 0 20px var(--overlord);}50%{box-shadow:0 0 40px var(--overlord),0 0 60px var(--overlord);}}
+    
+    .overlord-section{margin-bottom:20px;padding-bottom:15px;border-bottom:1px solid #300;}
+    .overlord-title{color:var(--overlord);font-size:0.9em;font-weight:bold;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;}
+    .god-btn{width:100%;padding:10px;margin-bottom:8px;background:rgba(255,0,64,0.2);border:1px solid var(--overlord);color:#fff;border-radius:6px;cursor:pointer;font-size:0.8em;transition:all 0.2s;}
+    .god-btn:hover{background:var(--overlord);color:#000;font-weight:bold;}
+    
+    /* Layout */
+    #main{flex:1;display:flex;overflow:hidden;}
+    #nav-rail{width:70px;background:var(--panel-bg);border-right:1px solid #1a1a2e;display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:6px;}
+    .nav-item{width:50px;height:50px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;color:#666;position:relative;}
+    .nav-item:hover,.nav-item.active{background:rgba(0,255,65,0.1);border-color:var(--neon-green);color:var(--neon-green);}
+    .nav-item.active::before{content:"";position:absolute;left:-10px;top:50%;transform:translateY(-50%);width:3px;height:25px;background:var(--neon-green);border-radius:0 3px 3px 0;}
+    .nav-icon{font-size:1.2em;}.nav-label{font-size:0.55em;margin-top:2px;}
+    .nav-badge{position:absolute;top:-2px;right:-2px;background:var(--danger);color:#fff;font-size:0.6em;padding:2px 5px;border-radius:10px;font-weight:bold;}
+    
+    #content{flex:1;overflow-y:auto;padding:12px;background:radial-gradient(ellipse at top,#0a0a1a 0%,var(--dark-bg) 100%);}
+    .section{display:none;animation:fadeIn 0.3s;}.section.active{display:block;}
+    .section-header{margin-bottom:15px;padding-bottom:12px;border-bottom:2px solid var(--neon-green);}
+    .section-title{font-size:1.4em;font-weight:900;color:var(--neon-green);text-transform:uppercase;margin:0;}
+    
+    /* FIXED PREMIUM STORE STYLES */
+    .premium-hero{background:linear-gradient(135deg,#1a0f00 0%,#0a0500 100%);border:2px solid var(--premium);border-radius:15px;padding:20px;margin-bottom:20px;position:relative;overflow:hidden;}
+    .premium-hero::before{content:"";position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:repeating-linear-gradient(45deg,transparent,transparent 10px,rgba(255,215,0,0.03) 10px,rgba(255,215,0,0.03) 20px);animation:shimmer 10s linear infinite;}
+    @keyframes shimmer{0%{transform:translate(-50%,-50%) rotate(0deg);}100%{transform:translate(-50%,-50%) rotate(360deg);}}
+    .premium-title{font-size:1.5em;color:var(--premium);text-shadow:0 0 20px var(--premium);margin-bottom:10px;position:relative;}
+    .premium-subtitle{color:#888;font-size:0.9em;position:relative;}
+    .premium-balance{background:rgba(0,0,0,0.5);border:1px solid var(--premium);border-radius:10px;padding:15px;display:flex;justify-content:space-between;align-items:center;margin-top:15px;}
+    .balance-label{color:#888;font-size:0.8em;}.balance-amount{color:var(--premium);font-size:1.5em;font-weight:bold;font-family:monospace;}
+    .btn-add-funds{background:var(--premium);color:#000;border:none;padding:10px 20px;border-radius:8px;font-weight:bold;cursor:pointer;}
+    
+    .location-banner{background:rgba(0,212,255,0.1);border:1px solid var(--neon-blue);border-radius:8px;padding:10px;margin-bottom:15px;display:flex;align-items:center;gap:10px;font-size:0.85em;}
+    .location-icon{font-size:1.5em;}
+    .location-text{flex:1;}.location-region{font-weight:bold;color:var(--neon-blue);}.location-note{color:#888;font-size:0.8em;}
+    .exchange-rate{color:var(--neon-green);font-family:monospace;font-size:0.9em;}
+    
+    .category-tabs{display:flex;gap:10px;margin-bottom:15px;overflow-x:auto;padding-bottom:5px;}
+    .category-tab{padding:10px 20px;background:rgba(255,255,255,0.05);border:1px solid #333;border-radius:20px;color:#888;cursor:pointer;white-space:nowrap;font-size:0.85em;transition:all 0.2s;}
+    .category-tab:hover,.category-tab.active{background:var(--premium);color:#000;border-color:var(--premium);font-weight:bold;}
+    
+    /* FIXED PREMIUM GRID */
+    .premium-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:15px;padding:5px;}
+    .premium-item{background:linear-gradient(145deg,#1a1a1a 0%,#0a0a0a 100%);border:1px solid #333;border-radius:12px;overflow:hidden;transition:all 0.2s;position:relative;display:flex;flex-direction:column;}
+    .premium-item:hover{border-color:var(--premium);transform:translateY(-5px);box-shadow:0 10px 30px rgba(255,215,0,0.2);}
+    .premium-item.featured{border-color:var(--premium);box-shadow:0 0 20px rgba(255,215,0,0.3);}
+    .premium-item.free{border-color:var(--overlord);box-shadow:0 0 20px var(--overlord);}
+    .item-badge{position:absolute;top:10px;left:10px;background:var(--danger);color:#fff;padding:3px 8px;border-radius:4px;font-size:0.65em;font-weight:bold;text-transform:uppercase;z-index:10;}
+    .item-badge.popular{background:var(--neon-purple);}.item-badge.limited{background:var(--danger);animation:pulse 1s infinite;}
+    .item-badge.free{background:var(--overlord);color:#fff;}
+    .item-image{height:100px;background:linear-gradient(135deg,#1a0f1a 0%,#0f0a0f 100%);display:flex;align-items:center;justify-content:center;font-size:2.5em;position:relative;}
+    .item-details{padding:12px;flex:1;display:flex;flex-direction:column;}
+    .item-name{font-weight:bold;margin-bottom:5px;font-size:0.9em;}
+    .item-desc{color:#888;font-size:0.75em;margin-bottom:8px;line-height:1.3;}
+    .item-effects{color:var(--neon-green);font-size:0.7em;margin-bottom:10px;flex:1;}
+    .item-price{display:flex;align-items:center;justify-content:space-between;margin-top:auto;}
+    .price-tag{display:flex;align-items:center;gap:5px;color:var(--premium);font-weight:bold;font-size:1em;}
+    .price-tag.free{color:var(--overlord);}
+    .price-original{text-decoration:line-through;color:#666;font-size:0.75em;}
+    .btn-buy{background:var(--premium);color:#000;border:none;padding:8px 15px;border-radius:6px;font-weight:bold;cursor:pointer;font-size:0.8em;}
+    .btn-buy:hover{box-shadow:0 0 15px var(--premium);}
+    .btn-buy.free{background:var(--overlord);color:#fff;}
+    .btn-buy.free:hover{box-shadow:0 0 15px var(--overlord);}
+    
+    .subscription-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-top:20px;}
+    .sub-card{background:linear-gradient(145deg,#1a1a1a 0%,#0a0a0a 100%);border:2px solid #333;border-radius:15px;padding:20px;text-align:center;position:relative;}
+    .sub-card.featured{border-color:var(--neon-purple);transform:scale(1.05);}
+    .sub-card.vip{border-color:var(--vip);box-shadow:0 0 30px rgba(255,0,255,0.2);}
+    .sub-card.free{border-color:var(--overlord);box-shadow:0 0 30px var(--overlord);}
+    .sub-name{font-size:1.2em;font-weight:bold;margin-bottom:5px;}
+    .sub-price{font-size:2em;color:var(--premium);font-weight:bold;margin:15px 0;}
+    .sub-price.free{color:var(--overlord);}
+    .sub-price span{font-size:0.5em;color:#888;}
+    .sub-benefits{list-style:none;padding:0;margin:0 0 20px 0;font-size:0.85em;color:#aaa;text-align:left;}
+    .sub-benefits li{margin:8px 0;padding-left:15px;position:relative;}
+    .sub-benefits li::before{content:"✓";position:absolute;left:0;color:var(--neon-green);}
+    .btn-subscribe{background:transparent;border:2px solid var(--premium);color:var(--premium);padding:12px 30px;border-radius:8px;font-weight:bold;cursor:pointer;transition:all 0.2s;}
+    .btn-subscribe:hover{background:var(--premium);color:#000;}
+    .btn-subscribe.free{border-color:var(--overlord);color:var(--overlord);}
+    .btn-subscribe.free:hover{background:var(--overlord);color:#fff;}
+    
+    /* Modal */
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;}
+    .modal.active{display:flex;}
+    .modal-content{background:var(--panel-bg);border:2px solid var(--premium);border-radius:20px;max-width:400px;width:100%;padding:25px;position:relative;}
+    .modal-header{text-align:center;margin-bottom:20px;}
+    .modal-icon{font-size:3em;margin-bottom:10px;}
+    .modal-title{color:var(--premium);font-size:1.3em;font-weight:bold;}
+    .purchase-details{background:rgba(0,0,0,0.3);border-radius:10px;padding:15px;margin-bottom:20px;}
+    .detail-row{display:flex;justify-content:space-between;margin:8px 0;font-size:0.9em;}
+    .detail-label{color:#888;}.detail-value{color:#fff;font-weight:bold;}
+    .detail-total{border-top:1px solid #333;margin-top:10px;padding-top:10px;font-size:1.1em;}
+    .payment-methods{display:flex;gap:10px;margin-bottom:20px;}
+    .payment-method{flex:1;padding:15px;background:rgba(255,255,255,0.05);border:2px solid #333;border-radius:10px;text-align:center;cursor:pointer;transition:all 0.2s;}
+    .payment-method:hover,.payment-method.selected{border-color:var(--neon-green);background:rgba(0,255,65,0.1);}
+    .payment-icon{font-size:1.5em;margin-bottom:5px;}
+    .confirm-btn{width:100%;padding:15px;background:var(--premium);color:#000;border:none;border-radius:10px;font-weight:bold;font-size:1.1em;cursor:pointer;}
+    .secure-note{text-align:center;margin-top:15px;font-size:0.75em;color:#666;display:flex;align-items:center;justify-content:center;gap:5px;}
+    
+    /* Toast */
+    .toast{position:fixed;top:80px;right:20px;background:var(--panel-bg);border-left:4px solid var(--neon-green);padding:15px 20px;border-radius:8px;box-shadow:0 5px 20px rgba(0,0,0,0.5);transform:translateX(400px);transition:transform 0.3s;z-index:9999;max-width:300px;}
+    .toast.show{transform:translateX(0);}
+    .toast.overlord{border-left-color:var(--overlord);}
+    .toast-title{font-weight:bold;margin-bottom:3px;}.toast-message{font-size:0.9em;color:#aaa;}
+    
+    @media(max-width:768px){
+      #nav-rail{width:55px;}
+      .premium-grid{grid-template-columns:repeat(2,1fr);}
+      .subscription-cards{grid-template-columns:1fr;}
+      .sub-card.featured{transform:none;}
+      #overlord-panel{width:250px;right:-270px;}
+    }
+  </style>
+</head>
+<body>
+  <!-- Location Display -->
+  <div class="location-display" id="location-display">
+    <span class="location-flag" id="location-flag">🌍</span>
+    <span id="location-text">Detecting...</span>
+  </div>
+
+  <!-- Login Screen -->
+  <div id="login-screen">
+    <div id="login-logo">☠ NIGHTCITY 2087</div>
+    <div id="login-subtitle">Enter the shadows. Build your empire.</div>
+    
+    <div class="login-container">
+      <div class="login-tabs">
+        <div class="login-tab active" onclick="switchLoginTab('email')">📧 Email</div>
+        <div class="login-tab" onclick="switchLoginTab('social')">🔐 Social</div>
+      </div>
+      
+      <form class="login-form active" id="form-email" onsubmit="handleEmailLogin(event)">
+        <div class="input-group">
+          <label>Email Address</label>
+          <input type="email" id="login-email" placeholder="neon@nightcity.com" required>
+        </div>
+        <div class="input-group">
+          <label>Password</label>
+          <input type="password" id="login-password" placeholder="••••••••" minlength="6" required>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.75em;color:#888;margin-bottom:15px;">
+          <label><input type="checkbox" id="remember-me"> Remember me</label>
+          <a href="#" style="color:var(--neon-blue);">Forgot password?</a>
+        </div>
+        <button type="submit" class="btn-login">ENTER NIGHTCITY</button>
+        <div style="text-align:center;margin-top:15px;font-size:0.8em;color:#888;">
+          New here? <a href="#" onclick="showRegister()" style="color:var(--neon-green);">Create account</a>
+        </div>
+      </form>
+      
+      <div class="login-form" id="form-social">
+        <div class="social-login">
+          <div class="social-btn google" onclick="handleGoogleLogin()">
+            <span>🔴</span> Google
+          </div>
+          <div class="social-btn facebook" onclick="handleFacebookLogin()">
+            <span>🔵</span> Facebook
+          </div>
+        </div>
+        <div class="divider">or continue with</div>
+        <div id="g_id_signin" data-type="standard" data-size="large" data-theme="filled_black" data-text="sign_in_with" data-shape="rectangular" data-logo_alignment="left"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div id="app">
+    <!-- Overlord Mode Banner -->
+    <div class="overlord-banner" id="overlord-banner">👑 OVERLORD MODE ACTIVE 👑</div>
+    
+    <!-- Overlord Toggle Button -->
+    <button id="overlord-toggle" onclick="toggleOverlordPanel()">☠</button>
+    
+    <!-- Overlord Control Panel -->
+    <div id="overlord-panel">
+      <div class="overlord-section">
+        <div class="overlord-title">⚡ Instant Resources</div>
+        <button class="god-btn" onclick="godMode('cash',1000000)">💵 +1M Credits</button>
+        <button class="god-btn" onclick="godMode('premium',99999)">👑 +99k Premium</button>
+        <button class="god-btn" onclick="godMode('energy',999)">⚡ Max Energy</button>
+        <button class="god-btn" onclick="godMode('level',99)">⭐ Max Level (99)</button>
+      </div>
+      
+      <div class="overlord-section">
+        <div class="overlord-title">🎁 Free Premium Items</div>
+        <button class="god-btn" onclick="grantAllPremium()">🛒 Unlock All Store Items</button>
+        <button class="god-btn" onclick="grantAllGear()">⚔️ All Legendary Gear</button>
+        <button class="god-btn" onclick="grantVIP()">👑 Permanent VIP Status</button>
+      </div>
+      
+      <div class="overlord-section">
+        <div class="overlord-title">🌍 World Control</div>
+        <button class="god-btn" onclick="godMode('heat',0)">❄️ Clear Heat</button>
+        <button class="god-btn" onclick="godMode('heat',100)">🔥 Max Heat (Test Raid)</button>
+        <button class="god-btn" onclick="resetCooldowns()">⏱️ Reset All Cooldowns</button>
+        <button class="god-btn" onclick="spawnBoss()">👹 Spawn Test Boss</button>
+      </div>
+      
+      <div class="overlord-section">
+        <div class="overlord-title">📊 Debug Tools</div>
+        <button class="god-btn" onclick="showDebugInfo()">ℹ️ Show Game State</button>
+        <button class="god-btn" onclick="exportSave()">💾 Export Save Data</button>
+        <button class="god-btn" onclick="importSave()">📥 Import Save Data</button>
+        <button class="god-btn" onclick="clearLocalStorage()">🗑️ Clear All Data</button>
+      </div>
+      
+      <div style="margin-top:auto;padding-top:15px;border-top:1px solid #300;text-align:center;font-size:0.75em;color:#666;">
+        Overlord v2.0.87<br>
+        Creator Access Only
+      </div>
+    </div>
+
+    <!-- Top HUD -->
+    <div id="top-hud">
+      <div id="user-profile">
+        <div id="user-avatar">👤</div>
+        <div id="user-info">
+          <div id="user-name">Guest</div>
+          <div id="user-status">● Online</div>
+        </div>
+        <div id="premium-badge">👑 VIP</div>
+        <div id="overlord-badge">☠ OVERLORD</div>
+      </div>
+      <div id="hud-currency">
+        <div class="currency">
+          <span>💵</span>
+          <span class="currency-amount" id="hud-cash">1000</span>
+        </div>
+        <div class="currency premium">
+          <span>👑</span>
+          <span class="currency-amount" id="hud-premium">0</span>
+        </div>
+        <div class="currency overlord" id="overlord-currency" style="display:none;">
+          <span>☠</span>
+          <span class="currency-amount">∞</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="main">
+      <!-- Navigation -->
+      <nav id="nav-rail">
+        <div class="nav-item active" onclick="switchTab('avatar')" id="nav-avatar"><span class="nav-icon">🎭</span><span class="nav-label">You</span></div>
+        <div class="nav-item" onclick="switchTab('hack')" id="nav-hack"><span class="nav-icon">💻</span><span class="nav-label">Hack</span></div>
+        <div class="nav-item" onclick="switchTab('race')" id="nav-race"><span class="nav-icon">🏎️</span><span class="nav-label">Race</span></div>
+        <div class="nav-item" onclick="switchTab('combat')" id="nav-combat"><span class="nav-icon">⚔️</span><span class="nav-label">Fight</span></div>
+        <div class="nav-item" onclick="switchTab('casino')" id="nav-casino"><span class="nav-icon">🎰</span><span class="nav-label">Luck</span></div>
+        <div class="nav-item" onclick="switchTab('premium')" id="nav-premium"><span class="nav-icon">👑</span><span class="nav-label" style="color:var(--premium);">Premium</span><span class="nav-badge">NEW</span></div>
+        <div class="nav-item" onclick="switchTab('war')" id="nav-war"><span class="nav-icon">🌐</span><span class="nav-label">PvP</span></div>
+      </nav>
+
+      <!-- Content -->
+      <main id="content">
+        
+        <!-- FIXED PREMIUM STORE TAB -->
+        <section id="section-premium" class="section">
+          <div class="section-header">
+            <h1 class="section-title" style="color:var(--premium);text-shadow:0 0 20px var(--premium);">Neon Exchange</h1>
+            <div class="section-subtitle">Premium Marketplace // Exclusive Gear</div>
+          </div>
+
+          <div class="premium-hero">
+            <div class="premium-title">👑 Welcome to the Elite</div>
+            <div class="premium-subtitle">Purchase premium credits to unlock exclusive gear, boosters, and VIP status.</div>
+            <div class="premium-balance">
+              <div>
+                <div class="balance-label">Your Premium Credits</div>
+                <div class="balance-amount" id="premium-balance">0 👑</div>
+              </div>
+              <button class="btn-add-funds" onclick="showAddFunds()">+ ADD FUNDS</button>
+            </div>
+          </div>
+
+          <div class="location-banner">
+            <span class="location-icon" id="region-icon">🌍</span>
+            <div class="location-text">
+              <div class="location-region" id="region-name">Global Region</div>
+              <div class="location-note">Prices adjusted for your local currency. Tax included.</div>
+            </div>
+            <div class="exchange-rate" id="exchange-rate">1 USD = 1.00 👑</div>
+          </div>
+
+          <div class="category-tabs">
+            <div class="category-tab active" onclick="switchPremiumTab('featured')">🔥 Featured</div>
+            <div class="category-tab" onclick="switchPremiumTab('gear')">⚔️ Gear</div>
+            <div class="category-tab" onclick="switchPremiumTab('boosters')">⚡ Boosters</div>
+            <div class="category-tab" onclick="switchPremiumTab('credits')">💰 Credits</div>
+            <div class="category-tab" onclick="switchPremiumTab('subscription')">📅 Subscribe</div>
+          </div>
+
+          <!-- Featured Items -->
+          <div id="premium-featured" class="premium-content" style="display:block;">
+            <div class="premium-grid" id="featured-grid">
+              <!-- Items injected by JS -->
+            </div>
+          </div>
+
+          <!-- Gear Items -->
+          <div id="premium-gear" class="premium-content" style="display:none;">
+            <div class="premium-grid" id="gear-grid"></div>
+          </div>
+
+          <!-- Boosters -->
+          <div id="premium-boosters" class="premium-content" style="display:none;">
+            <div class="premium-grid" id="boosters-grid"></div>
+          </div>
+
+          <!-- Credits -->
+          <div id="premium-credits" class="premium-content" style="display:none;">
+            <div class="premium-grid" id="credits-grid"></div>
+          </div>
+
+          <!-- Subscriptions -->
+          <div id="premium-subscription" class="premium-content" style="display:none;">
+            <div class="subscription-cards" id="subscription-grid"></div>
+          </div>
+
+        </section>
+
+        <!-- Other tabs placeholder -->
+        <section id="section-avatar" class="section active">
+          <div class="section-header"><h1 class="section-title">Neural Avatar</h1></div>
+          <div style="padding:40px;text-align:center;color:#666;">
+            Character customization system<br>
+            (Previous implementation)
+          </div>
+        </section>
+
+        <section id="section-hack" class="section">
+          <div class="section-header"><h1 class="section-title">Netrunner</h1></div>
+          <div style="padding:40px;text-align:center;color:#666;">Hacking mini-game</div>
+        </section>
+
+        <section id="section-race" class="section">
+          <div class="section-header"><h1 class="section-title">Street Racing</h1></div>
+          <div style="padding:40px;text-align:center;color:#666;">Racing mini-game</div>
+        </section>
+
+        <section id="section-combat" class="section">
+          <div class="section-header"><h1 class="section-title">Combat Arena</h1></div>
+          <div style="padding:40px;text-align:center;color:#666;">Combat mini-game</div>
+        </section>
+
+        <section id="section-casino" class="section">
+          <div class="section-header"><h1 class="section-title">Neon Casino</h1></div>
+          <div style="padding:40px;text-align:center;color:#666;">Casino mini-game</div>
+        </section>
+
+        <section id="section-war" class="section">
+          <div class="section-header"><h1 class="section-title">Syndicate War</h1></div>
+          <div style="padding:40px;text-align:center;color:#666;">PvP system</div>
+        </section>
+
+      </main>
+    </div>
+
+    <div id="console-container" style="position:fixed;bottom:0;left:70px;right:0;height:100px;background:rgba(5,5,10,0.95);border-top:2px solid var(--neon-green);padding:8px;font-family:monospace;font-size:0.75em;overflow-y:auto;color:#888;">
+      <div style="color:var(--neon-green);">[SYSTEM] NightCity 2087 initialized...</div>
+    </div>
+  </div>
+
+  <!-- Purchase Modal -->
+  <div class="modal" id="purchase-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-icon" id="purchase-icon">👑</div>
+        <div class="modal-title" id="purchase-title">Confirm Purchase</div>
+      </div>
+      <div class="purchase-details">
+        <div class="detail-row">
+          <span class="detail-label">Item:</span>
+          <span class="detail-value" id="purchase-item">Premium Pack</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Region:</span>
+          <span class="detail-value" id="purchase-region">United States</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Tax:</span>
+          <span class="detail-value" id="purchase-tax">$0.00</span>
+        </div>
+        <div class="detail-row detail-total">
+          <span class="detail-label">Total:</span>
+          <span class="detail-value" style="color:var(--premium);" id="purchase-total">$9.99</span>
+        </div>
+      </div>
+      <div class="payment-methods">
+        <div class="payment-method selected" onclick="selectPayment(this,'card')">
+          <div class="payment-icon">💳</div>
+          <div style="font-size:0.75em;">Card</div>
+        </div>
+        <div class="payment-method" onclick="selectPayment(this,'paypal')">
+          <div class="payment-icon">🅿️</div>
+          <div style="font-size:0.75em;">PayPal</div>
+        </div>
+        <div class="payment-method" onclick="selectPayment(this,'crypto')">
+          <div class="payment-icon">₿</div>
+          <div style="font-size:0.75em;">Crypto</div>
+        </div>
+      </div>
+      <button class="confirm-btn" onclick="confirmPurchase()">COMPLETE PURCHASE</button>
+      <div class="secure-note">
+        <span>🔒</span> Secured by 256-bit encryption
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <div class="toast-title" id="toast-title">Success</div>
+    <div class="toast-message" id="toast-message">Purchase completed!</div>
+  </div>
+
+  <script>
+    // ==========================================
+    // GAME STATE & CONFIGURATION
+    // ==========================================
+    const state={
+      cash:1000,
+      premium:0,
+      energy:100,
+      maxEnergy:100,
+      level:1,
+      xp:0,
+      heat:0,
+      isOverlord:false,
+      inventory:[],
+      premiumItemsOwned:[],
+      vipStatus:false
+    };
+
+    // CREATOR CONFIGURATION - Set your email here
+    const CREATOR_EMAIL='alfuku@example.com'; // CHANGE THIS TO YOUR EMAIL
+    const CREATOR_IDS=['creator','admin','overlord','dev']; // Alternative IDs
+
+    // LOCATION DATA
+    let userLocation={country:'US',region:'North America',currency:'USD',rate:1,symbol:'$'};
+    let selectedItem=null;
+
+    // PREMIUM ITEMS DATABASE
+    const PREMIUM_ITEMS=[
+      // Featured
+      {id:'f1',name:'Starter Pack',icon:'🎁',desc:'Jumpstart your empire',price:4.99,effects:'5000cr + 50👑 + Rare Gear',category:'featured',featured:true,badge:'POPULAR'},
+      {id:'f2',name:'Neon Credits',icon:'💎',desc:'Premium currency pack',price:9.99,effects:'100 👑',category:'featured',featured:true,badge:null},
+      {id:'f3',name:'Cyber-Samurai',icon:'⚔️',desc:'Legendary weapon skin',price:14.99,effects:'ATK +15, Visual FX',category:'featured',featured:false,badge:'LIMITED'},
+      {id:'f4',name:'VIP Status',icon:'👑',desc:'30-day VIP membership',price:19.99,effects:'All boosts + Exclusive access',category:'featured',featured:true,badge:'BEST VALUE'},
+      
+      // Gear
+      {id:'g1',name:'Plasma Rifle',icon:'🔫',desc:'High-energy weapon',price:24.99,effects:'ATK +25',category:'gear',badge:null},
+      {id:'g2',name:'Neural Link',icon:'🧠',desc:'Brain-computer interface',price:49.99,effects:'HACK +50',category:'gear',badge:'EPIC'},
+      {id:'g3',name:'Exo-Skeleton',icon:'🦾',desc:'Strength enhancement',price:39.99,effects:'DEF +30, STR +20',category:'gear',badge:null},
+      {id:'g4',name:'Optical Camo',icon:'👻',desc:'Active camouflage',price:29.99,effects:'Stealth +100%',category:'gear',badge:'RARE'},
+      
+      // Boosters
+      {id:'b1',name:'Energy Surge',icon:'⚡',desc:'7-day unlimited energy',price:2.99,effects:'No energy costs',category:'boosters',badge:null},
+      {id:'b2',name:'XP Booster',icon:'📈',desc:'Double XP 24 hours',price:4.99,effects:'2x all XP gains',category:'boosters',badge:null},
+      {id:'b3',name:'Heat Shield',icon:'❄️',desc:'No heat generation',price:7.99,effects:'24h invisible to cops',category:'boosters',badge:null},
+      {id:'b4',name:'Luck Enhancer',icon:'🍀',desc:'Better drop rates',price:5.99,effects:'+50% rare drops',category:'boosters',badge:null},
+      
+      // Credits
+      {id:'c1',name:'100 Crowns',icon:'👑',desc:'Small credit pack',price:0.99,effects:'100 premium credits',category:'credits',badge:null},
+      {id:'c2',name:'550 Crowns',icon:'👑',desc:'Bonus credit pack',price:4.99,effects:'550 credits (+10% bonus)',category:'credits',badge:'BONUS'},
+      {id:'c3',name:'1200 Crowns',icon:'👑',desc:'Value pack',price:9.99,effects:'1200 credits (+20% bonus)',category:'credits',badge:'VALUE'},
+      {id:'c4',name:'6500 Crowns',icon:'👑',desc:'Whale pack',price:49.99,effects:'6500 credits (+30% bonus)',category:'credits',badge:'WHALE'}
+    ];
+
+    const SUBSCRIPTIONS=[
+      {id:'sub1',name:'Street Runner',price:4.99,period:'month',color:'var(--neon-blue)',benefits:['+100 Energy daily','10% XP boost','Ad-free','Exclusive skin']},
+      {id:'sub2',name:'Syndicate Boss',price:14.99,period:'month',color:'var(--neon-purple)',featured:true,benefits:['+300 Energy daily','25% XP & Cash boost','Exclusive gear monthly','Priority PvP','VIP badge']},
+      {id:'sub3',name:'Night City Overlord',price:49.99,period:'month',color:'var(--vip)',vip:true,benefits:['Unlimited Energy','50% all boosters','Legendary gear monthly','Early access','Direct dev support','Custom frame']}
+    ];
+
+    // ==========================================
+    // INITIALIZATION
+    // ==========================================
+    window.onload=function(){
+      detectLocation();
+      initPremiumStore();
+    };
+
+    // ==========================================
+    // AUTHENTICATION SYSTEM
+    // ==========================================
+    function switchLoginTab(tab){
+      document.querySelectorAll('.login-tab').forEach(t=>t.classList.remove('active'));
+      document.querySelectorAll('.login-form').forEach(f=>f.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('form-'+tab).classList.add('active');
+    }
+
+    function handleEmailLogin(e){
+      e.preventDefault();
+      const email=document.getElementById('login-email').value.toLowerCase();
+      const password=document.getElementById('login-password').value;
+      
+      // Check for creator access
+      const isCreator=email===CREATOR_EMAIL.toLowerCase() || CREATOR_IDS.some(id=>email.includes(id));
+      
+      loginUser({email:email,name:email.split('@')[0],isCreator:isCreator});
+    }
+
+    function handleGoogleLogin(){
+      // Mock Google login
+      loginUser({email:'user@gmail.com',name:'Runner',isCreator:false});
+    }
+
+    function handleFacebookLogin(){
+      loginUser({email:'user@facebook.com',name:'Punk',isCreator:false});
+    }
+
+    function loginUser(userData){
+      currentUser=userData;
+      state.isOverlord=userData.isCreator||false;
+      
+      document.getElementById('login-screen').style.opacity='0';
+      setTimeout(()=>{
+        document.getElementById('login-screen').style.display='none';
+        document.getElementById('app').style.display='flex';
+        document.getElementById('user-name').textContent=userData.name;
+        
+        if(state.isOverlord){
+          activateOverlordMode();
+        }
+        
+        updateDisplay();
+        showToast('Welcome',`Entering NightCity as ${userData.name}`);
+        log(`User logged in: ${userData.email} ${state.isOverlord?'[OVERLORD]' : ''}`);
+      },500);
+    }
+
+    // ==========================================
+    // OVERLORD MODE SYSTEM
+    // ==========================================
+    function activateOverlordMode(){
+      document.getElementById('overlord-banner').classList.add('active');
+      document.getElementById('overlord-badge').classList.add('active');
+      document.getElementById('overlord-toggle').classList.add('active');
+      document.getElementById('overlord-currency').style.display='flex';
+      
+      // Auto-grant some starting resources for testing
+      state.premium=99999;
+      state.cash=1000000;
+      state.energy=999;
+      state.level=99;
+      state.vipStatus=true;
+      
+      updateDisplay();
+      showToast('👑 OVERLORD MODE', 'Creator access granted. All systems unlocked.', true);
+      log('OVERLORD MODE ACTIVATED - Creator access granted');
+    }
+
+    function toggleOverlordPanel(){
+      document.getElementById('overlord-panel').classList.toggle('active');
+    }
+
+    function godMode(type,amount){
+      switch(type){
+        case 'cash':state.cash=amount;break;
+        case 'premium':state.premium=amount;break;
+        case 'energy':state.energy=amount;break;
+        case 'level':state.level=amount;break;
+        case 'heat':state.heat=amount;break;
+      }
+      updateDisplay();
+      showToast('⚡ GOD MODE', `${type.toUpperCase()} set to ${amount}`, true);
+      log(`[OVERLORD] ${type} set to ${amount}`);
+    }
+
+    function grantAllPremium(){
+      state.premiumItemsOwned=PREMIUM_ITEMS.map(i=>i.id);
+      state.vipStatus=true;
+      updateDisplay();
+      initPremiumStore(); // Refresh store to show "OWNED"
+      showToast('🎁 ALL ITEMS UNLOCKED', 'Every premium item is now yours', true);
+    }
+
+    function grantAllGear(){
+      // Add all gear to inventory
+      const allGear=PREMIUM_ITEMS.filter(i=>i.category==='gear');
+      allGear.forEach(g=>{
+        if(!state.inventory.includes(g.id)){
+          state.inventory.push(g.id);
+        }
+      });
+      showToast('⚔️ LEGENDARY GEAR', 'All weapons and armor equipped', true);
+    }
+
+    function grantVIP(){
+      state.vipStatus=true;
+      document.getElementById('premium-badge').classList.add('active');
+      showToast('👑 VIP STATUS', 'Permanent VIP activated', true);
+    }
+
+    function resetCooldowns(){
+      showToast('⏱️ COOLDOWNS RESET', 'All timers cleared', true);
+    }
+
+    function spawnBoss(){
+      showToast('👹 BOSS SPAWNED', 'Test boss appears!', true);
+    }
+
+    function showDebugInfo(){
+      console.log('GAME STATE:',state);
+      console.log('USER:',currentUser);
+      alert('Debug info logged to console (F12)');
+    }
+
+    function exportSave(){
+      const data=btoa(JSON.stringify({state:state,user:currentUser}));
+      navigator.clipboard.writeText(data);
+      showToast('💾 EXPORTED', 'Save data copied to clipboard', true);
+    }
+
+    function importSave(){
+      const data=prompt('Paste save data:');
+      if(data){
+        try{
+          const parsed=JSON.parse(atob(data));
+          Object.assign(state,parsed.state);
+          updateDisplay();
+          showToast('📥 IMPORTED', 'Save data loaded', true);
+        }catch(e){
+          alert('Invalid save data');
+        }
+      }
+    }
+
+    function clearLocalStorage(){
+      if(confirm('Clear ALL data? This cannot be undone!')){
+        localStorage.clear();
+        location.reload();
+      }
+    }
+
+    // ==========================================
+    // PREMIUM STORE SYSTEM (FIXED)
+    // ==========================================
+    function initPremiumStore(){
+      renderFeatured();
+      renderGear();
+      renderBoosters();
+      renderCredits();
+      renderSubscriptions();
+    }
+
+    function renderFeatured(){
+      const container=document.getElementById('featured-grid');
+      container.innerHTML='';
+      const items=PREMIUM_ITEMS.filter(i=>i.category==='featured'||i.featured);
+      items.forEach(item=>renderPremiumItem(container,item));
+    }
+
+    function renderGear(){
+      const container=document.getElementById('gear-grid');
+      container.innerHTML='';
+      PREMIUM_ITEMS.filter(i=>i.category==='gear').forEach(item=>renderPremiumItem(container,item));
+    }
+
+    function renderBoosters(){
+      const container=document.getElementById('boosters-grid');
+      container.innerHTML='';
+      PREMIUM_ITEMS.filter(i=>i.category==='boosters').forEach(item=>renderPremiumItem(container,item));
+    }
+
+    function renderCredits(){
+      const container=document.getElementById('credits-grid');
+      container.innerHTML='';
+      PREMIUM_ITEMS.filter(i=>i.category==='credits').forEach(item=>renderPremiumItem(container,item));
+    }
+
+    function renderSubscriptions(){
+      const container=document.getElementById('subscription-grid');
+      container.innerHTML='';
+      
+      SUBSCRIPTIONS.forEach(sub=>{
+        const isOwned=state.vipStatus&&sub.vip;
+        const isFree=state.isOverlord;
+        
+        const div=document.createElement('div');
+        div.className='sub-card'+(sub.featured?' featured':'')+(sub.vip?' vip':'')+(isFree?' free':'');
+        div.innerHTML=`
+          ${sub.featured?'<div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--neon-purple);color:#fff;padding:3px 15px;border-radius:10px;font-size:0.7em;font-weight:bold;">MOST POPULAR</div>':''}
+          <div class="sub-name" style="color:${sub.color};">${sub.name}</div>
+          <div class="sub-price ${isFree?'free':''}">${isFree?'FREE':userLocation.symbol+((sub.price*userLocation.rate).toFixed(2))}<span>/${sub.period}</span></div>
+          <ul class="sub-benefits">
+            ${sub.benefits.map(b=>`<li>${b}</li>`).join('')}
+          </ul>
+          <button class="btn-subscribe ${isFree?'free':''}" onclick="subscribe('${sub.id}')" ${isOwned?'disabled':''}>
+            ${isOwned?'ACTIVE':isFree?'CLAIM':'SUBSCRIBE'}
+          </button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function renderPremiumItem(container,item){
+      const isOwned=state.premiumItemsOwned.includes(item.id);
+      const isFree=state.isOverlord;
+      const localPrice=(item.price*userLocation.rate).toFixed(2);
+      
+      const div=document.createElement('div');
+      div.className='premium-item'+(item.featured?' featured':'')+(isFree?' free':'');
+      div.innerHTML=`
+        ${item.badge?`<span class="item-badge ${item.badge.toLowerCase()==='limited'?'limited':item.badge.toLowerCase()==='free'?'free':'popular'}">${isFree?'FREE':item.badge}</span>`:''}
+        <div class="item-image">${item.icon}</div>
+        <div class="item-details">
+          <div class="item-name">${item.name}</div>
+          <div class="item-desc">${item.desc}</div>
+          <div class="item-effects">${item.effects}</div>
+          <div class="item-price">
+            <span class="price-tag ${isFree?'free':''}">
+              ${isOwned?'OWNED':isFree?'FREE':userLocation.symbol+localPrice}
+            </span>
+            <button class="btn-buy ${isFree?'free':''}" onclick="buyItem('${item.id}')" ${isOwned?'disabled':''}>
+              ${isOwned?'✓':isFree?'GET':'BUY'}
+            </button>
+          </div>
+        </div>
+      `;
+      container.appendChild(div);
+    }
+
+    function switchPremiumTab(tab){
+      document.querySelectorAll('.category-tab').forEach(t=>t.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      document.querySelectorAll('.premium-content').forEach(c=>c.style.display='none');
+      document.getElementById('premium-'+tab).style.display='block';
+    }
+
+    function buyItem(id){
+      const item=PREMIUM_ITEMS.find(i=>i.id===id);
+      if(!item)return;
+      
+      // Overlord gets everything free
+      if(state.isOverlord){
+        state.premiumItemsOwned.push(id);
+        showToast('🎁 ITEM ACQUIRED', `${item.name} added to inventory (FREE)`, true);
+        initPremiumStore();
+        return;
+      }
+      
+      selectedItem=item;
+      const localPrice=(item.price*userLocation.rate).toFixed(2);
+      
+      document.getElementById('purchase-item').textContent=item.name;
+      document.getElementById('purchase-region').textContent=userLocation.region;
+      document.getElementById('purchase-tax').textContent=userLocation.country==='US'?'$0.00':'Included';
+      document.getElementById('purchase-total').textContent=userLocation.symbol+localPrice;
+      document.getElementById('purchase-icon').textContent=item.icon;
+      
+      document.getElementById('purchase-modal').classList.add('active');
+    }
+
+    function confirmPurchase(){
+      document.getElementById('purchase-modal').classList.remove('active');
+      
+      if(!selectedItem)return;
+      
+      // Simulate processing
+      setTimeout(()=>{
+        state.premiumItemsOwned.push(selectedItem.id);
+        showToast('✅ PURCHASE COMPLETE', `You now own: ${selectedItem.name}`);
+        initPremiumStore();
+        selectedItem=null;
+      },1000);
+    }
+
+    function subscribe(id){
+      const sub=SUBSCRIPTIONS.find(s=>s.id===id);
+      if(!sub)return;
+      
+      if(state.isOverlord){
+        state.vipStatus=true;
+        document.getElementById('premium-badge').classList.add('active');
+        showToast('👑 VIP ACTIVATED', `${sub.name} subscription activated (FREE)`, true);
+        renderSubscriptions();
+        return;
+      }
+      
+      showToast('Processing',`Subscribing to ${sub.name}...`);
+    }
+
+    function selectPayment(el,method){
+      document.querySelectorAll('.payment-method').forEach(p=>p.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+
+    function showAddFunds(){
+      switchPremiumTab('credits');
+    }
+
+    // ==========================================
+    // LOCATION SYSTEM
+    // ==========================================
+    async function detectLocation(){
+      try{
+        const pos=await new Promise((resolve,reject)=>{
+          navigator.geolocation.getCurrentPosition(resolve,reject,{timeout:5000});
+        });
+        
+        // Mock region detection based on coordinates
+        const lat=pos.coords.latitude;
+        const lng=pos.coords.longitude;
+        
+        if(lat>25&&lat<50&&lng>-130&&lng<-60)setRegion('US','North America','🇺🇸',1,'$');
+        else if(lat>35&&lat<70&&lng>-10&&lng<40)setRegion('EU','Europe','🇪🇺',0.92,'€');
+        else if(lat>-40&&lat<10&&lng>110&&lng<160)setRegion('AU','Oceania','🇦🇺',1.52,'A$');
+        else if(lat>20&&lat<50&&lng>120&&lng<150)setRegion('JP','Asia','🇯🇵',145,'¥');
+        else setRegion('GB','UK','🇬🇧',0.79,'£');
+      }catch(e){
+        // Default to US
+        setRegion('US','North America','🇺🇸',1,'$');
+      }
+    }
+
+    function setRegion(code,region,flag,rate,symbol){
+      userLocation={country:code,region,currency:code==='JP'?'JPY':code==='GB'?'GBP':code==='EU'?'EUR':'USD',rate,symbol};
+      document.getElementById('location-flag').textContent=flag;
+      document.getElementById('location-text').textContent=`${region} (${code})`;
+      document.getElementById('region-icon').textContent=flag;
+      document.getElementById('region-name').textContent=region;
+      document.getElementById('exchange-rate').textContent=`1 USD = ${rate} ${userLocation.currency}`;
+      
+      // Refresh prices
+      initPremiumStore();
+    }
+
+    // ==========================================
+    // UTILITY FUNCTIONS
+    // ==========================================
+    function updateDisplay(){
+      document.getElementById('hud-cash').textContent=state.cash.toLocaleString();
+      document.getElementById('hud-premium').textContent=state.premium.toLocaleString();
+      document.getElementById('premium-balance').textContent=state.premium+' 👑';
+      
+      if(state.vipStatus){
+        document.getElementById('premium-badge').classList.add('active');
+      }
+    }
+
+    function switchTab(tab){
+      document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+      document.getElementById('section-'+tab).classList.add('active');
+      document.getElementById('nav-'+tab).classList.add('active');
+    }
+
+    function showToast(title,message,isOverlordToast=false){
+      const toast=document.getElementById('toast');
+      document.getElementById('toast-title').textContent=title;
+      document.getElementById('toast-message').textContent=message;
+      
+      if(isOverlordToast)toast.classList.add('overlord');
+      else toast.classList.remove('overlord');
+      
+      toast.classList.add('show');
+      setTimeout(()=>toast.classList.remove('show'),4000);
+    }
+
+    function log(msg){
+      const con=document.getElementById('console-container');
+      const div=document.createElement('div');
+      div.textContent=`[${new Date().toLocaleTimeString()}] ${msg}`;
+      con.appendChild(div);
+      con.scrollTop=con.scrollHeight;
+    }
+
+    // Google Sign-In callback
+    window.handleCredentialResponse=function(response){
+      const payload=JSON.parse(atob(response.credential.split('.')[1]));
+      const isCreator=payload.email===CREATOR_EMAIL;
+      loginUser({
+        email:payload.email,
+        name:payload.name,
+        isCreator:isCreator,
+        avatar:payload.picture
+      });
+    };
+  </script>
+</body>
+</html>
